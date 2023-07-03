@@ -63,6 +63,16 @@ const Employee = sequelize.define('employee', {
     fullName: {
         type: DataTypes.VIRTUAL,
         get() {
+            // set null values to empty string
+            if (this.Fname == null) {
+                this.Fname = '';
+            }
+            if (this.Mname == null) {
+                this.Mname = '';
+            }
+            if (this.Lname == null) {
+                this.Lname = '';
+            }
             return `${this.Fname} ${this.Mname} ${this.Lname}`;
         }
     },

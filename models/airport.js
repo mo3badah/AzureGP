@@ -37,6 +37,16 @@ const Airport = sequelize.define(
     AP_fullName: {
       type: DataTypes.VIRTUAL,
       get() {
+        // set null values to empty string
+        if (this.AP_name == null) {
+            this.AP_name = "";
+        }
+        if (this.AP_city == null) {
+            this.AP_city = "";
+        }
+        if (this.AP_state == null) {
+            this.AP_state = "";
+        }
         return `${this.AP_name} ${this.AP_city} ${this.AP_state} ${this.AP_country}`;
       },
     },

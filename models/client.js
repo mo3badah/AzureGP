@@ -58,6 +58,16 @@ const Client = sequelize.define('client', {
     fullName: {
         type: DataTypes.VIRTUAL,
         get() {
+            // set null values to empty string
+            if (this.Fname == null) {
+                this.Fname = '';
+            }
+            if (this.Mname == null) {
+                this.Mname = '';
+            }
+            if (this.Lname == null) {
+                this.Lname = '';
+            }
             return `${this.Fname} ${this.Mname} ${this.Lname}`;
         },
         set(value) {
@@ -81,7 +91,18 @@ const Client = sequelize.define('client', {
     // set full address data from the street and state and country
     fullAddress: {
         type: DataTypes.VIRTUAL,
+
         get() {
+            // set null values to empty string
+            if (this.street == null) {
+                this.street = '';
+            }
+            if (this.state == null) {
+                this.state = '';
+            }
+            if (this.country == null) {
+                this.country = '';
+            }
             return `${this.street}, ${this.state}, ${this.country}`;
         },
         set(value) {
@@ -118,7 +139,7 @@ Client.belongsToMany(Employee, { through: 'client_employee' });
         console.log('Connection has been established successfully.');
 
         await sequelize.sync({
-            alter: true
+            // alter: true
         });
         console.log('All models were synchronized successfully.');
     } catch (error) {
