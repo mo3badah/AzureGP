@@ -14,6 +14,10 @@ const ClassDetails = sequelize.define('class_details', {
         type: DataTypes.STRING(10),
         allowNull: false
     },
+    available_seats: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     price: {
         type: DataTypes.DOUBLE,
         allowNull: true

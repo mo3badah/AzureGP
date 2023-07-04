@@ -15,7 +15,8 @@ const schema = {
     birth: { type: "string"
       // , isDate: true
     },
-    phone: { type: "number", pattern: "^[0-9]{10}$" },
+    
+    phone: { type: "string" },
     passport: { type: "string" },
   },
   required: ["Fname", "Lname", "email", "password"],
