@@ -10,6 +10,7 @@ const Stops = require("../models/stops");
 const Types = require("../models/type");
 const ClassDetails = require("../models/class_details");
 const Seats = require("../models/seats");
+const Ticket = require("../models/ticket");
 const { all } = require("express/lib/application");
 // let flight_number = require("../util/flightNameGen");
 
@@ -216,13 +217,6 @@ let getFlightFromToDate = async (req, res) => {
 };
 let getFlightSeats = async (req, res) => {
   flightId = req.body.id;
-  // get flight classes with id
-  // let classes = await Flight.findOne({
-  //   where: {id: flightId},
-  //   include: {
-  //     model: ClassDetails
-  //   }
-  // })
   let classes = await ClassDetails.findAll({
     attributes: ["class", "available_seats", "price"],
     where: {
@@ -242,7 +236,120 @@ let getFlightSeats = async (req, res) => {
   if (!classes) res.status(404).send("Flight with this ID is not found...");
   res.status(200).send(classes);
 };
-
+// Reserve number of seats in a flight to a specific users
+let reserveSeats = async (req, res) => {
+  let seats = req.body.seats;
+  let users = req.body.users;
+  // Check if no of seats are equal to users
+  if (seats.length !== users.length) {
+    return res.status(400).send("Number of seats and users are not equal");
+  }
+  // get class id and seat id
+  let ticketNumber = await generateTicketNumber();
+  let seatIds = [];
+  let seatsData = await Seats.findAll({
+    where: {
+      seat_no: seats,
+      classDetailsId: classId,
+      ticketTicketNumber: null,
+    },
+  });
+  seatsData.forEach(async (seat) => {
+    seatIds.push(seat.id);
+  });
+  let ticket = await Ticket.create({
+    ticketNumber: ticketNumber,
+    userId: userId,
+    classDetailsId: classId,
+  });
+  await ticket.addSeats(seatIds);
+  res.status(200).send("Seats have been reserved successfully");
+};
+async function generateTicketNumber(seat, user) {
+  // check seat is available
+  let seatData = await Seats.findOne({
+    where: {
+      id: seat
+    },
+    include: [
+      {
+        model: ClassDetails,
+        attributes: ["class_details_id"],
+        include: [
+          {
+            model: Flight,
+            attributes: ["id"],
+          },
+        ],
+      },
+    ],
+  });
+  if (!seatData) return "Seat is not found...";
+  if (seatData.ticketTicketNumber !== null) return "Seat is not available...";
+  // check user is available
+  let userData = await Client.findOne({
+    where: {
+      id: user,
+    },
+  });
+  if (!userData) return "User is not found...";
+  // generate ticket number
+  let classId = seatData.classDetails.class_details_id;
+  let flightId = seatData.classDetails.flight.id;
+  // get instance of class and flight
+    let classData = await ClassDetails.findOne({
+        where: {
+            class_details_id: classId,
+        }
+    }
+    );
+    let flightData = await Flight.findOne({
+        where: {
+            id: flightId,
+        }
+    }
+    );
+    // generate ticket
+    let newTicket = await Ticket.create({});
+    // add ticket to user
+    await userData.addTicket(newTicket);
+    // add ticket to seat
+    await seatData.setTicket(newTicket);
+    // add ticket to class
+    await classData.addTicket(newTicket);
+    // add ticket to flight
+    await flightData.addTicket(newTicket);
+    // return ticket number
+    return await getTicketData(newTicket.id);
+}
+// get ticket data
+async function getTicketData(ticketId) {
+    let ticketData = await Ticket.findOne({
+        where: {
+        id: ticketId,
+        },
+        attributes: ["ticketNumber"],
+        include: [
+        {
+            model: Seats,
+            attributes: ["seat_no"],
+        },
+        {
+            model: ClassDetails,
+            attributes: ["class","price"],
+        },
+        {
+            model: Flight,
+            attributes: ["flight_number", "take_off_time", "take_off_date","duration","no_of_stops"],
+        },
+        {
+            model: Client,
+            attributes: ["fullName"],
+        },
+        ],
+    });
+    return ticketData;
+}
 // generate business seats
 function generateBusinessSeats(numSeats) {
   const seatLetters = ["A", "B", "C", "D"]; // Letters representing seat rows

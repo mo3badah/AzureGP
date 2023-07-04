@@ -149,7 +149,6 @@ let getAllAirports = async (req, res) => {
     res.status(404).send("Airports data are not found...");
   }
 };
-
 // update users
 let updateToAdminClient = async (req, res) => {
   try {
