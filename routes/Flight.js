@@ -10,6 +10,8 @@ router.get("/", flight.getAllFlights)
 router.get("/from-to", flight.getFlightFromTo)
 router.get("/from-to-date", flight.getFlightFromToDate)
 router.get("/flight-seats", flight.getFlightSeats)
+router.post("/reserve-seats", flight.reserveSeats)
+router.get("/ticket-details", flight.getTicketDetailsByTicketNumber)
 
 module.exports = router
 

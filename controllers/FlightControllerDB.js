@@ -2,7 +2,7 @@
 const Flight = require("../models/flight");
 const Airport = require("../models/airport");
 const FlightAirport = require("../models/FlightAirports");
-const sequelize = require("sequelize");
+const sequelize = require("../models/sequelize");
 const jwt = require("jsonwebtoken");
 const { json } = require("express");
 const Airline = require("../models/airline");
@@ -11,6 +11,7 @@ const Types = require("../models/type");
 const ClassDetails = require("../models/class_details");
 const Seats = require("../models/seats");
 const Ticket = require("../models/ticket");
+const Client = require("../models/client");
 const { all } = require("express/lib/application");
 // let flight_number = require("../util/flightNameGen");
 
@@ -166,6 +167,27 @@ let getAllFlights = async (req, res) => {
     res.status(404).send("Flights data are not found...");
   }
 };
+async function getFlightById(id){
+    try {
+      let flight = await Flight.findAll({
+        exclude: ["createdAt", "updatedAt"],
+        where: { id: id },
+        include: [
+          { model: Airline },
+          { model: Airport },
+          { model: ClassDetails },
+        ],
+      });
+      if (!flight) return null;
+      let flightsData = await finalView(flight);
+      return (flightsData);
+    } catch (e) {
+      for (let err in e.errors) {
+        console.log(e.errors[err].message);
+      }
+      return null
+    }
+}
 let getFlightFromTo = async (req, res) => {
   try {
     let airportFromId = await findAirportId(req.body.airportFrom);
@@ -238,118 +260,154 @@ let getFlightSeats = async (req, res) => {
 };
 // Reserve number of seats in a flight to a specific users
 let reserveSeats = async (req, res) => {
+  try {
   let seats = req.body.seats;
   let users = req.body.users;
   // Check if no of seats are equal to users
   if (seats.length !== users.length) {
     return res.status(400).send("Number of seats and users are not equal");
   }
-  // get class id and seat id
-  let ticketNumber = await generateTicketNumber();
-  let seatIds = [];
-  let seatsData = await Seats.findAll({
-    where: {
-      seat_no: seats,
-      classDetailsId: classId,
-      ticketTicketNumber: null,
-    },
-  });
-  seatsData.forEach(async (seat) => {
-    seatIds.push(seat.id);
-  });
-  let ticket = await Ticket.create({
-    ticketNumber: ticketNumber,
-    userId: userId,
-    classDetailsId: classId,
-  });
-  await ticket.addSeats(seatIds);
-  res.status(200).send("Seats have been reserved successfully");
+  // generate ticket number for each seat
+    let reserved = [];
+    let notReserved = [];
+for (let i = 0; i < seats.length; i++) {
+    let ticketData = await generateTicketNumber(seats[i], users[i]);
+    if (ticketData === null) {
+      notReserved.push({ seat: seats[i], user: users[i] });
+    } else {
+      reserved.push(ticketData)
+    }
+}
+    if (notReserved.length > 0) {
+        return res.status(400).send({ reserved: reserved, notReserved: notReserved })
+    }
+    res.status(200).send(reserved);
+    } catch (e) {
+        for (let err in e.errors) {
+            console.log(e.errors[err].message);
+        }
+        res.status(404).send("Seats are not reserved...");
+  }
 };
 async function generateTicketNumber(seat, user) {
-  // check seat is available
-  let seatData = await Seats.findOne({
-    where: {
-      id: seat
-    },
-    include: [
-      {
-        model: ClassDetails,
-        attributes: ["class_details_id"],
-        include: [
-          {
-            model: Flight,
-            attributes: ["id"],
-          },
-        ],
+  let t = await sequelize.transaction();
+  try {
+    // check seat is available
+    let seatData = await Seats.findOne({
+      where: {
+        id: seat
       },
-    ],
-  });
-  if (!seatData) return "Seat is not found...";
-  if (seatData.ticketTicketNumber !== null) return "Seat is not available...";
-  // check user is available
-  let userData = await Client.findOne({
-    where: {
-      id: user,
-    },
-  });
-  if (!userData) return "User is not found...";
-  // generate ticket number
-  let classId = seatData.classDetails.class_details_id;
-  let flightId = seatData.classDetails.flight.id;
-  // get instance of class and flight
+      include: [
+        {
+          model: ClassDetails,
+          attributes: ["class_details_id"],
+          include: [
+            {
+              model: Flight,
+              attributes: ["id"],
+            },
+          ],
+        },
+      ],
+    }, { transaction: t });
+    if (!seatData) return "Seat is not found...";
+    if (seatData.ticketTicketNumber !== null) return "Seat is not available...";
+    // check user is available
+    let userData = await Client.findOne({
+      where: {
+        id: user,
+      },
+    }, { transaction: t });
+    if (!userData) return "User is not found...";
+    // generate ticket number
+    let classId = seatData.class_detail.class_details_id;
+    let flightId = seatData.class_detail.flight.id;
+    // get instance of class and flight
     let classData = await ClassDetails.findOne({
-        where: {
+          where: {
             class_details_id: classId,
-        }
-    }
+          }
+        }, { transaction: t }
     );
     let flightData = await Flight.findOne({
-        where: {
+          where: {
             id: flightId,
-        }
-    }
+          }
+        }, { transaction: t }
     );
     // generate ticket
     let newTicket = await Ticket.create({});
     // add ticket to user
-    await userData.addTicket(newTicket);
+    await userData.addTicket(newTicket, { transaction: t });
     // add ticket to seat
-    await seatData.setTicket(newTicket);
+    await seatData.setTicket(newTicket, { transaction: t });
     // add ticket to class
-    await classData.addTicket(newTicket);
+    await classData.addTicket(newTicket, { transaction: t });
     // add ticket to flight
-    await flightData.addTicket(newTicket);
+    await flightData.addTicket(newTicket, { transaction: t });
+    // commit transaction
+    await t.commit();
     // return ticket number
-    return await getTicketData(newTicket.id);
+    return await getTicketData(newTicket.ticket_number);
+  } catch (e) {
+    for (let err in e.errors) {
+      console.log(e.errors[err].message);
+    }
+    await t.rollback();
+    return null;
+  }
+}
+let getTicketDetailsByTicketNumber = async (req, res) => {
+    let ticketId = req.body.id;
+    let ticketData = await getTicketData(ticketId);
+    if (!ticketData) return res.status(404).send("Ticket is not found...");
+    res.status(200).send(ticketData);
 }
 // get ticket data
 async function getTicketData(ticketId) {
+  try {
     let ticketData = await Ticket.findOne({
         where: {
-        id: ticketId,
+        ticket_number: ticketId,
         },
-        attributes: ["ticketNumber"],
+        attributes: ["ticket_number"],
         include: [
         {
             model: Seats,
             attributes: ["seat_no"],
         },
-        {
+          {
             model: ClassDetails,
             attributes: ["class","price"],
-        },
+          },
         {
             model: Flight,
-            attributes: ["flight_number", "take_off_time", "take_off_date","duration","no_of_stops"],
+            attributes: ["id"],
         },
         {
-            model: Client,
-            attributes: ["fullName"],
+            model: Client
         },
         ],
     });
-    return ticketData;
-}
+    // get flight data
+    // console.log(JSON.parse(JSON.stringify(ticketData)))
+    let flightData = await getFlightById(ticketData.flight.id);
+    let finalData = flightData[0];
+    // return finalData;
+    finalData.ticket =  ticketData.ticket_number;
+    finalData.seat =  ticketData.seat.seat_no;
+    finalData.class =  ticketData.class_detail.class;
+    finalData.price =  ticketData.class_detail.price;
+    finalData.user =  ticketData.client.fullName;
+    delete finalData.classes
+    return finalData;
+    } catch (e) {
+        for (let err in e.errors) {
+            console.log(e.errors[err].message);
+        }
+        return null;
+    }
+  }
 // generate business seats
 function generateBusinessSeats(numSeats) {
   const seatLetters = ["A", "B", "C", "D"]; // Letters representing seat rows
@@ -501,4 +559,6 @@ module.exports = {
   getFlightFromTo,
   getFlightFromToDate,
   getFlightSeats,
+  reserveSeats,
+  getTicketDetailsByTicketNumber
 };

@@ -13,7 +13,7 @@ router.get("/",getAllClients)
 router.post("/editNewUser", updateValidator, editNewClient)
 router.post("/addNewClientFromAdmin",validator,addNewClientFromAdmin)
 router.post("/addMultipleClients",userBulkValidator, addMultipleClients)
-router.post("/updateToClient",updateToClient)
-router.delete("/deleteClient/:email",deleteClient)
+// router.post("/updateToClient",updateToClient)
+// router.delete("/deleteClient/:email",deleteClient)
 
 module.exports = router
