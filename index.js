@@ -7,6 +7,7 @@ import * as fs from "fs";
 import {re} from "@babel/core/lib/vendor/import-meta-resolve";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import cors from "cors";
 
 
 // these routes are needed so we can forward our routing to separe files ( mainly for the arrangement of the code)
@@ -18,7 +19,6 @@ import airlineRouter from "../routes/Airline"
 import flightRouter from "../routes/Flight"
 import paymentRouter from "../routes/Payment"
 import employeeRouter from "../routes/Employee"
-import cors from "cors";
 
 
 // firstly we start using our libraries which we needed and add them to our app
