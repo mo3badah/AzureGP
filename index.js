@@ -18,6 +18,7 @@ import airlineRouter from "../routes/Airline"
 import flightRouter from "../routes/Flight"
 import paymentRouter from "../routes/Payment"
 import employeeRouter from "../routes/Employee"
+import cors from "cors";
 
 
 // firstly we start using our libraries which we needed and add them to our app
@@ -199,7 +200,7 @@ function fetchItem(name){
 
 
 app.use(express.static("front"))
-
+app.use(cors())
 // // set mongoose connection
 // mongoose.connect("mongodb://localhost:27017/innovation")
 //     .then(()=> console.log("connected to DB"))
