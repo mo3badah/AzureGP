@@ -110,7 +110,7 @@ const Client = sequelize.define('client', {
         }
     }
 });
-
+Client.belongsTo(Client, { as: "link", foreignKey: 'linked_users' });
 Client.hasMany(Payment);
 Payment.belongsTo(Client);
 Client.hasMany(TicketCancel, { foreignKey: 'client_id' })

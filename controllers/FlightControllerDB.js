@@ -3,6 +3,7 @@ const Flight = require("../models/flight");
 const Airport = require("../models/airport");
 const FlightAirport = require("../models/FlightAirports");
 const sequelize = require("../models/sequelize");
+const { Op } = require('sequelize');
 const jwt = require("jsonwebtoken");
 const { json } = require("express");
 const Airline = require("../models/airline");
@@ -197,9 +198,9 @@ let getFlightFromTo = async (req, res) => {
       attributes: ["flightId"],
     });
     let flightsData = [];
-    flights.forEach(async (flight) => {
+    for (const flight of flights) {
       flightsData.push(flight.flightId);
-    });
+    }
     if (!flightsData)
       return res.status(404).send("Flights data are not found...");
     let flightsAllData = await getAllFlightsWithIds(flightsData);
@@ -237,6 +238,64 @@ let getFlightFromToDate = async (req, res) => {
     res.status(404).send("Flights data are not found...");
   }
 };
+let getFlightFromToDateClassNo = async (req, res) => {
+  try {
+    let airportFromId = await findAirportId(req.body.airportFrom);
+    let airportToId = await findAirportId(req.body.airportTo);
+    let flights = await FlightAirport.findAll({
+      where: { airportFrom: airportFromId.AP_id, airportTo: airportToId.AP_id },
+      attributes: ["flightId"],
+    });
+    let flightsData = [];
+    for (const flight of flights) {
+      flightsData.push(flight.flightId);
+    }
+    if (!flightsData)
+      return res.status(404).send("Flights data are not found...");
+    let flightsAllData = await getAllFlightsWithIdsWithDateClassNo(
+      flightsData,
+      req.body.date,
+      req.body.class,
+      req.body.no
+    );
+    res.status(200).send(flightsAllData);
+  } catch (e) {
+    for (let err in e.errors) {
+      console.log(e.errors[err].message);
+    }
+    res.status(404).send("Flights data are not found...");
+  }
+};
+let getFlightFromToElasticDateClassNo = async (req, res) => {
+  try {
+    let airportFromId = await findAirportId(req.body.airportFrom);
+    let airportToId = await findAirportId(req.body.airportTo);
+    let flights = await FlightAirport.findAll({
+      where: { airportFrom: airportFromId.AP_id, airportTo: airportToId.AP_id },
+      attributes: ["flightId"],
+    });
+    let flightsData = [];
+    flights.forEach(async (flight) => {
+      flightsData.push(flight.flightId);
+    });
+    if (!flightsData)
+      return res.status(404).send("Flights data are not found...");
+    let flightsAllData = await getAllFlightsWithIdsWithDateClassNoFlexible(
+      flightsData,
+      req.body.dateFrom,
+      req.body.dateTo,
+      req.body.class,
+      req.body.no
+    );
+    res.status(200).send(flightsAllData);
+  } catch (e) {
+    for (let err in e.errors) {
+      console.log(e.errors[err].message);
+    }
+    res.status(404).send("Flights data are not found...");
+  }
+};
+
 let getFlightSeats = async (req, res) => {
   flightId = req.body.id;
   let classes = await ClassDetails.findAll({
@@ -247,9 +306,9 @@ let getFlightSeats = async (req, res) => {
     include: [
       {
         model: Seats,
-        where: {
-          ticketTicketNumber: null,
-        },
+        // where: {
+        //   ticketTicketNumber: null,
+        // },
         attributes: ["seat_no", "id"],
       },
     ],
@@ -503,10 +562,10 @@ async function getAllFlightsWithIds(ids) {
     let flights = await Flight.findAll({
       where: {
         id: {
-          [sequelize.Op.in]: ids,
+          [Op.in]: ids,
         },
       },
-      exclude: ["createdAt", "updatedAt"],
+      attributes: { exclude: ["createdAt", "updatedAt"]},
       include: [
         { model: Airline },
         { model: Airport },
@@ -514,7 +573,7 @@ async function getAllFlightsWithIds(ids) {
       ],
     });
     // return res.send(flights);
-    if (!flights) return res.status(404).send("Flights data are not found...");
+    if (!flights) return ("Flights data are not found...");
     return await finalView(flights);
   } catch (e) {
     for (let err in e.errors) {
@@ -529,10 +588,10 @@ async function getAllFlightsWithIdsWithDate(ids, date) {
     let flights = await Flight.findAll({
       where: {
         id: {
-          [sequelize.Op.in]: ids,
+          [Op.in]: ids,
         },
         take_off_date: {
-          [sequelize.Op.gte]: dat,
+          [Op.gte]: dat,
         },
       },
       exclude: ["createdAt", "updatedAt"],
@@ -543,7 +602,7 @@ async function getAllFlightsWithIdsWithDate(ids, date) {
       ],
     });
     // return res.send(flights);
-    if (!flights) return res.status(404).send("Flights data are not found...");
+    if (!flights) return ("Flights data are not found...");
     return await finalView(flights);
   } catch (e) {
     for (let err in e.errors) {
@@ -552,13 +611,83 @@ async function getAllFlightsWithIdsWithDate(ids, date) {
     return "Flights data are not found...";
   }
 }
+async function getAllFlightsWithIdsWithDateClassNo(ids, date, className, no) {
+  try {
+    let dat = new Date(date);
+    let flights = await Flight.findAll({
+      where: {
+        id: {
+          [Op.in]: ids,
+        },
+        take_off_date: {
+          [Op.gte]: dat,
+        },
+      },
+      exclude: ["createdAt", "updatedAt"],
+      include: [
+        {model: Airline},
+        {model: Airport},
+        {
+          model: ClassDetails, where: {
+            class: className,
+            available_seats: {[Op.gte]: no}
+          }
+        },
+      ],
+    });
+    // return res.send(flights);
+    if (!flights) return ("Flights data are not found...");
+    return await finalView(flights);
+  } catch (e) {
+    for (let err in e.errors) {
+      console.log(e.errors[err].message);
+    }
+    return "Flights data are not found...";
+  }
+}
+async function getAllFlightsWithIdsWithDateClassNoFlexible(ids, dateFrom, dateTo, className, no) {
+  try {
+    let datfrom = new Date(dateFrom);
+    let datto = new Date(dateTo);
+    let flights = await Flight.findAll({
+      where: {
+        id: {
+          [Op.in]: ids,
+        },
+        take_off_date: {
+          [Op.between]: [datfrom, datto ]
+        },
+      },
+      exclude: ["createdAt", "updatedAt"],
+      include: [
+        { model: Airline },
+        { model: Airport },
+        { model: ClassDetails, where:{
+            class: className,
+            available_seats: {[Op.gte]: no}
+          } },
+      ],
+    });
+    // return res.send(flights);
+    if (!flights) return ("Flights data are not found...");
+    return await finalView(flights);
+  } catch (e) {
+    for (let err in e.errors) {
+      console.log(e.errors[err].message);
+    }
+    return "Flights data are not found...";
+  }
+}
+
 module.exports = {
   postNewFlight,
   postNewFlights,
   getAllFlights,
   getFlightFromTo,
   getFlightFromToDate,
+  getFlightFromToDateClassNo,
   getFlightSeats,
   reserveSeats,
-  getTicketDetailsByTicketNumber
-};
+  getTicketDetailsByTicketNumber,
+  getFlightFromToElasticDateClassNo
+}

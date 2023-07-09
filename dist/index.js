@@ -7,6 +7,7 @@ var fs = _interopRequireWildcard(require("fs"));
 var _importMetaResolve = require("@babel/core/lib/vendor/import-meta-resolve");
 var _cookieParser = _interopRequireDefault(require("cookie-parser"));
 var _helmet = _interopRequireDefault(require("helmet"));
+var _cors = _interopRequireDefault(require("cors"));
 var _Innovations = _interopRequireDefault(require("../routes/Innovations"));
 var _Users = _interopRequireDefault(require("../routes/Users"));
 var _Auth = _interopRequireDefault(require("../routes/Auth"));
@@ -455,7 +456,7 @@ function fetchItem(name) {
   });
 }
 app.use(_express["default"]["static"]("front"));
-
+app.use((0, _cors["default"])());
 // // set mongoose connection
 // mongoose.connect("mongodb://localhost:27017/innovation")
 //     .then(()=> console.log("connected to DB"))

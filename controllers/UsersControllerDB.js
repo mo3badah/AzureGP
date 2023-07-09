@@ -75,7 +75,12 @@ let addMultipleClients = async (req, res) => {
         allClientsAdded.push(newClient.id );
       }
     }
-    if (notAdded.length === 0) res.status(200).send(allClientsAdded);
+    if (notAdded.length === 0) {
+      for (let i=1; i < allClientsAdded.length; i++){
+        await linkUserToSup(allClientsAdded[0], allClientsAdded[i])
+      }
+      res.status(200).send(allClientsAdded)
+    }
     else
       res.status(400).send({
         added: allClientsAdded,
@@ -85,6 +90,27 @@ let addMultipleClients = async (req, res) => {
     res.status(400).send(`Can't Add user try again later...`);
   }
 };
+async function linkUserToSup(sup, user){
+  // get these models instances first
+  try {
+    superUser = await getUserById(sup)
+    linkedUser = await getUserById(user)
+    await linkedUser.setLink(superUser)
+    return (`User ${linkedUser.email} is linked with ${superUser.email}`)
+  }catch (e) {
+      return (`not linked user with email ${user} to ${sup}`)
+  }
+}
+async function getUserById(user_id){
+  return await Client.findOne({
+    where:{
+      id: user_id
+    },
+    attributes: {
+      include: ["id", "email"]
+    }
+  })
+}
 // update users
 let editNewClient = async (req, res) => {
   try {
