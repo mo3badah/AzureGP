@@ -124,6 +124,31 @@ async function createNewFlight(flight) {
     through: { airportTo: airportTo.AP_id },
   });
 }
+// to make a flight auto generated every specific time
+// get the flight data from DB
+let getFlightData = async (name) => {
+    let flights = await Flight.findOne({
+      where: { flight_number: name },
+        include: [
+        {
+            model: Airport,
+            as: "airports",
+            through: { attributes: ["airportTo"] },
+        },
+        {
+            model: ClassDetails,
+            as: "class_details",
+            include: [
+            {
+                model: Seats,
+                as: "seats",
+            },
+            ],
+        },
+        ],
+    });
+    return flights;
+}
 let updateFlight = async (req, res) => {};
 let postNewFlight = async (req, res) => {
   try {
@@ -416,6 +441,63 @@ async function generateTicketNumber(seat, user) {
     return null;
   }
 }
+// get all tickets data of user and linked users
+let getAllTicketsLinkedData = async (req, res) => {
+  try {
+    let user_id = req.body.id;
+    let allTickets = await searchForLinkedUsers(user_id);
+    if (allTickets.length === 0)
+      return res.status(404).send("No tickets found...");
+    let allTicketsData = [];
+    for (let ticket of allTickets) {
+      let ticketData = await getTicketData(ticket);
+      if (ticketData) allTicketsData.push(ticketData);
+    }
+    if (allTicketsData.length === 0)
+      return res.status(404).send("No tickets found...");
+    res.status(200).send(allTicketsData);
+  }catch (e) {
+    for (let err in e.errors) {
+      console.log(e.errors[err].message);
+    }
+    res.status(404).send("No tickets found...");
+  }
+}
+// get all tickets number of user and users linked to
+async function searchForLinkedUsers(user_id){
+  // get all clients linked with this user_id
+  let linkedUsers = await Client.findAll({
+    where:{
+      linked_users: user_id
+    },
+    attributes:{
+      include: ["id"]
+    }
+  })
+  // push user_id to linkedUsers array
+  linkedUsers.push({id: user_id})
+  let allTickets = []
+  for (let user of linkedUsers){
+    // get tickets of each user
+    let tickets = await Ticket.findAll({
+        where:{
+            clientId: user.id
+        },
+        attributes:{
+            include: ["ticket_number"]
+        }
+    })
+    // push tickets to allTickets array
+    if (tickets) {
+        for (let ticket of tickets){
+            allTickets.push(ticket.ticket_number)
+        }
+    }
+  }
+  if (allTickets.length === 0) return null
+    return allTickets
+}
+// get ticket details by ticket number
 let getTicketDetailsByTicketNumber = async (req, res) => {
     let ticketId = req.body.id;
     let ticketData = await getTicketData(ticketId);
@@ -467,6 +549,21 @@ async function getTicketData(ticketId) {
         return null;
     }
   }
+
+  //search by ticket no
+    let searchByTicketNo = async (req, res) => {
+          try {
+                let ticketId = req.body.id;
+                let ticketData = await getTicketData(ticketId);
+                if (!ticketData) return res.status(404).send("Ticket is not found...");
+                res.status(200).send(ticketData);
+            } catch (e) {
+                for (let err in e.errors) {
+                    console.log(e.errors[err].message);
+                }
+                res.status(404).send("Ticket is not found...");
+            }
+          }
 // generate business seats
 function generateBusinessSeats(numSeats) {
   const seatLetters = ["A", "B", "C", "D"]; // Letters representing seat rows
@@ -689,5 +786,7 @@ module.exports = {
   getFlightSeats,
   reserveSeats,
   getTicketDetailsByTicketNumber,
-  getFlightFromToElasticDateClassNo
+  getFlightFromToElasticDateClassNo,
+  getAllTicketsLinkedData,
+  searchByTicketNo
 }

@@ -14,6 +14,8 @@ router.get("/from-to-elastic-date-class-no", flight.getFlightFromToElasticDateCl
 router.get("/flight-seats", flight.getFlightSeats)
 router.post("/reserve-seats", flight.reserveSeats)
 router.get("/ticket-details", flight.getTicketDetailsByTicketNumber)
+router.get("/tickets-with-linked-users", flight.getAllTicketsLinkedData)
+router.get("/get-ticket", flight.searchByTicketNo)
 
 module.exports = router
 

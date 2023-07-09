@@ -13,7 +13,7 @@ const Flight = sequelize.define('flight', {
     flight_number: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+        unique: false,
     },
     take_off_time: {
         type: DataTypes.TIME,
