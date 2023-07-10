@@ -24,7 +24,7 @@ let postNewClient = async (req, res) => {
     res
       .status(200)
       .send(
-        `Ok user: ${req.body.Fname} ${req.body.Lname} registered with email: ${req.body.email}`
+        token
       );
   } catch (e) {
     for (let err in e.errors) {

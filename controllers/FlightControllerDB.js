@@ -182,7 +182,7 @@ let getAllFlights = async (req, res) => {
         { model: ClassDetails },
       ],
     });
-    // return res.send(flights);
+    console.log(JSON.parse(JSON.stringify(flights)))
     if (!flights) return res.status(404).send("Flights data are not found...");
     let flightsData = await finalView(flights);
     res.send(flightsData);
@@ -624,19 +624,25 @@ function generateEconomiSeats(numSeats) {
 async function finalView(flights) {
   flights = flights.map(async (flight) => {
     let airportTo = await Airport.findOne({
-      attributes: ["AP_name"],
+      attributes: ["AP_name","AP_city","AP_country"],
       where: { AP_id: flight["airports"][0]["flightAirports"]["airportTo"] },
     });
     return {
+      flight_id: flight.id,
       flight_number: flight.flight_number,
       take_off_time: flight.take_off_time,
       take_off_date: flight.take_off_date,
+      landing: flight.landing_time,
       status: flight.status,
       duration: flight.duration,
       no_of_stops: flight.no_of_stops,
       airline_name: flight.airline.AL_name,
       airportFrom: flight.airports[0].AP_name,
+      airportFromCountry: flight.airports[0].AP_country,
+      airportFromCity: flight.airports[0].AP_city,
       airportTo: airportTo.AP_name,
+      airportToCountry: airportTo.AP_country,
+      airportToCity: airportTo.AP_city,
       classes: flight.class_details.map((class_detail) => {
         return {
           class_type: class_detail.class,

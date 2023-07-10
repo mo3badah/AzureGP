@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('./sequelize');
 const Stops = require('./stops');
 const Type = require('./type');
+const moment = require('moment');
 
 const Flight = sequelize.define('flight', {
     id: {
@@ -34,6 +35,22 @@ const Flight = sequelize.define('flight', {
     no_of_stops:{
         type: DataTypes.INTEGER,
         allowNull: true
+    },
+    landing_time: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            if (this.take_off_date && this.take_off_time && this.duration) {
+                const takeoffDateTime = moment(`${this.take_off_date}T${this.take_off_time}`);
+                const landingDateTime = takeoffDateTime.add(this.duration, 'minutes');
+
+                // Format the landing date and time using Moment.js formatting options
+                const formattedLandingDateTime = landingDateTime.format('YYYY-MM-DD HH:mm:ss');
+
+                return formattedLandingDateTime;
+            }
+
+            return null;
+        }
     }
 });
 
