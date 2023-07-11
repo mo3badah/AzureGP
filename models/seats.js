@@ -11,6 +11,16 @@ const Seats = sequelize.define('seats', {
         defaultValue: DataTypes.UUIDV4,
         allowNull: false,
         primaryKey: true,
+    },
+    status: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            if (this.get("ticketTicketNumber") === null) {
+                return 'available';
+            } else {
+                return 'not available';
+            }
+        }
     }
 })
 

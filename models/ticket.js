@@ -10,6 +10,14 @@ const Ticket = sequelize.define('ticket', {
         defaultValue: DataTypes.UUIDV4, // Or DataTypes.UUIDV1
         primaryKey: true,
         allowNull: false
+    },
+    price: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
+    added_lagguge: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 });
 

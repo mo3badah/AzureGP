@@ -12,10 +12,12 @@ router.post("/from-to-date", flight.getFlightFromToDate)
 router.post("/from-to-date-class-no", flight.getFlightFromToDateClassNo)
 router.post("/from-to-elastic-date-class-no", flight.getFlightFromToElasticDateClassNo)
 router.post("/flight-seats", flight.getFlightSeats)
+router.post("/class-seats", flight.getClassSeats)
 router.post("/reserve-seats", flight.reserveSeats)
 router.post("/ticket-details", flight.getTicketDetailsByTicketNumber)
 router.post("/tickets-with-linked-users", flight.getAllTicketsLinkedData)
 router.post("/get-ticket", flight.searchByTicketNo)
+router.post("/get-flight-with-name", flight.getFlightWithName)
 
 module.exports = router
 

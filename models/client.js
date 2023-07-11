@@ -3,6 +3,7 @@ const {DataTypes} = require("sequelize");
 const ClientPassport = require("./client_passport");
 const ClientPhone = require('./client_phone')
 const BiometricsData = require('./biometric_data')
+const Childs = require('./childs')
 const Ticket = require('./ticket')
 const Employee = require('./employee')
 const TicketCancel = require("./ticket_cancel");
@@ -110,6 +111,9 @@ const Client = sequelize.define('client', {
         }
     }
 });
+Client.hasMany(Childs);
+Childs.belongsTo(Client);
+
 Client.belongsTo(Client, { as: "link", foreignKey: 'linked_users' });
 Client.hasMany(Payment);
 Payment.belongsTo(Client);
@@ -139,7 +143,7 @@ Client.belongsToMany(Employee, { through: 'client_employee' });
         console.log('Connection has been established successfully.');
 
         await sequelize.sync({
-            // alter: true
+            alter: true
         });
         console.log('All models were synchronized successfully.');
     } catch (error) {

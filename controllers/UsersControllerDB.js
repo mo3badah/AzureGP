@@ -1,5 +1,6 @@
 // import user model of db
 const Client = require("../models/client");
+const Child = require("../models/childs");
 const sequelize = require("../models/sequelize");
 const ClientPhone = require("../models/client_phone");
 const ClientPassport = require("../models/client_passport");
@@ -64,6 +65,7 @@ let addMultipleClients = async (req, res) => {
   try {
     let newClients = req.body;
     let allClientsAdded = [];
+    let allChildsAdded = [];
     let notAdded = [];
     for (let client of newClients) {
       let newClient = await createNewUser(client);
@@ -73,17 +75,23 @@ let addMultipleClients = async (req, res) => {
         notAdded.push({ email: client.email, error: "Not Unique Passport" });
       }else {
         allClientsAdded.push(newClient.id );
+        if (newClient.childs){
+          allChildsAdded = newClient.childs;
+        }
       }
     }
     if (notAdded.length === 0) {
       for (let i=1; i < allClientsAdded.length; i++){
         await linkUserToSup(allClientsAdded[0], allClientsAdded[i])
       }
-      res.status(200).send(allClientsAdded)
+        res.status(200).send({
+          clients: allClientsAdded,
+          childs: allChildsAdded
+        })
     }
     else
       res.status(400).send({
-        added: allClientsAdded,
+        clients: allClientsAdded,
         notAdded: notAdded,
       });
   } catch (e) {
@@ -173,24 +181,6 @@ let editNewClient = async (req, res) => {
       .send(`Client with email ${req.body.email} is not found to be updated`);
   }
 };
-// delete Innovation
-// let deleteClient = async (req, res) => {
-//   try {
-//     let delClient = await Client.findOneAndRemove({ email: req.params.email });
-//     if (!delClient)
-//       return res
-//         .status(404)
-//         .send(`user with email ${req.params.email} is not found to be deleted`);
-//     res.send(`deleted successfully : ` + delClient);
-//   } catch (e) {
-//     for (let err in e.errors) {
-//       console.log(e.errors[err].message);
-//     }
-//     res
-//       .status(404)
-//       .send(`user with email ${req.params.email} is not found to be deleted`);
-//   }
-// };
 async function jwtCreate(user) {
   return await jwt.sign(
     {
@@ -235,6 +225,22 @@ async function createNewUser(user) {
           passport: user.passport,
         }, { transaction: t });
       await newClientPassport.setClient(newClient, { transaction: t });
+    }
+    let childs = [];
+    if (user.childs){
+      for (child of user.childs){
+        newChild = await Child.create({
+            Fname: child.Fname,
+            Lname: child.Lname,
+            gender: child.gender,
+            birth: child.birth
+        }, { transaction: t });
+        await newChild.setClient(newClient, { transaction: t });
+        childs.push(newChild.id);
+      }
+    }
+    if (childs.length > 0){
+      newClient.childs = childs;
     }
     await t.commit();
     return newClient;
