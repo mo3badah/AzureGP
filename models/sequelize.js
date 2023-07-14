@@ -12,11 +12,10 @@ const sequelize = new Sequelize(process.env.DATABASE_SCHEMA, process.env.DATABAS
     dialect: process.env.DATABASE_DIALECT,
     dialectOptions: {
         ssl: {
-            ca: fs.readFileSync(path.join(__dirname, 'models/initialData/DigiCertGlobalRootCA.crt.pem')).toString()
+            ca: fs.readFileSync(path.join(__dirname, 'initialData/DigiCertGlobalRootCA.crt.pem')).toString()
         },
     },
-    // sayhello
-    // helloagain
+
 });
 
 module.exports = sequelize;
