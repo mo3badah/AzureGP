@@ -15,7 +15,7 @@ const sequelize = new Sequelize(process.env.DATABASE_SCHEMA, process.env.DATABAS
             ca: fs.readFileSync(path.join(__dirname, 'initialData/DigiCertGlobalRootCA.crt.pem')).toString()
         },
     },
-    timeout: 30000,
+    connectTimeout: 30000,
 });
 
 module.exports = sequelize;
