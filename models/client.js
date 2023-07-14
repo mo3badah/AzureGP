@@ -124,7 +124,7 @@ TicketCancel.belongsTo(Payment, { foreignKey: 'payment_id' });
 
 Client.hasMany(Ticket);
 Ticket.belongsTo(Client);
-
+a
 Client.hasMany(ClientPassport);
 ClientPassport.belongsTo(Client);
 

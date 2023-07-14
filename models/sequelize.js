@@ -1,4 +1,6 @@
 const { Sequelize } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 // const sequelize = new Sequelize('GraduationProject', 'admin', 'mo3badah2023', {
@@ -7,7 +9,12 @@ require('dotenv').config();
 // });
 const sequelize = new Sequelize(process.env.DATABASE_SCHEMA, process.env.DATABASE_USER, process.env.DATABASE_PASSWORD, {
     host: process.env.DATABASE_HOST,
-    dialect: process.env.DATABASE_DIALECT
+    dialect: process.env.DATABASE_DIALECT,
+    dialectOptions: {
+        ssl: {
+            ca: fs.readFileSync(path.join(__dirname, 'models/initialData/DigiCertGlobalRootCA.crt.pem')).toString()
+        },
+    },
 });
 
 module.exports = sequelize;
