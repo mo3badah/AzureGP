@@ -16,6 +16,7 @@ const sequelize = new Sequelize(process.env.DATABASE_SCHEMA, process.env.DATABAS
         },
     },
     // sayhello
+    // helloagain
 });
 
 module.exports = sequelize;
