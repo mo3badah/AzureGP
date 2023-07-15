@@ -143,7 +143,7 @@ Client.belongsToMany(Employee, { through: 'client_employee' });
         console.log('Connection has been established successfully.');
 
         await sequelize.sync({
-            // alter: true
+            alter: true
         });
         console.log('All models were synchronized successfully.');
     } catch (error) {

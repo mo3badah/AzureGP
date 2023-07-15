@@ -70,7 +70,7 @@ app.get("/signup", function (req, res) {
   res.sendFile(path.join(__dirname, "../front/signup.html"));
 });
 app.post("/addnew", function (req, res) {
-  res.render('add.ejs');
+  res.render("add.ejs");
 });
 // edit cycle
 // first fetch data and put inside front end
@@ -84,7 +84,7 @@ app.post("/editInnov", /*#__PURE__*/function () {
           return fetchSpecificInnov(req.body.name);
         case 2:
           innov = _context2.sent;
-          res.render('edit.ejs', {
+          res.render("edit.ejs", {
             innov: innov
           });
         case 4:
@@ -111,9 +111,9 @@ app.post("/editInnovData", /*#__PURE__*/function () {
         case 0:
           innov = req.body; // Awaiting fetch which contains method,
           // headers and content-type and body
-          put('http://localhost:3000/api/innovations/' + req.body.name, innov)
+          put("http://localhost:3000/api/innovations/" + req.body.name, innov)
           // Resolving promise for response data
-          .then(res.redirect('/dashboard'))
+          .then(res.redirect("/dashboard"))
           // Resolving promise for error
           ["catch"](function (err) {
             return console.log(err);
@@ -139,9 +139,9 @@ function _put() {
         case 0:
           _context11.next = 2;
           return fetch(url, {
-            method: 'PUT',
+            method: "PUT",
             headers: {
-              'Content-type': 'application/json'
+              "Content-type": "application/json"
             },
             body: JSON.stringify(data)
           });
@@ -167,9 +167,9 @@ app.post("/deleteInnovData", /*#__PURE__*/function () {
         case 0:
           // Awaiting fetch which contains method,
           // headers and content-type and body
-          deleting('http://localhost:3000/api/innovations/' + req.body.name)
+          deleting("http://localhost:3000/api/innovations/" + req.body.name)
           // Resolving promise for response data
-          .then(res.redirect('/dashboard'))
+          .then(res.redirect("/dashboard"))
           // Resolving promise for error
           ["catch"](function (err) {
             return console.log(err);
@@ -195,15 +195,15 @@ function _deleting() {
         case 0:
           _context12.next = 2;
           return fetch(url, {
-            method: 'DELETE',
+            method: "DELETE",
             headers: {
-              'Content-type': 'application/json'
+              "Content-type": "application/json"
             }
           });
         case 2:
           response = _context12.sent;
           // Awaiting for the resource to be deleted
-          resData = 'resource deleted...'; // Return response data
+          resData = "resource deleted..."; // Return response data
           return _context12.abrupt("return", resData);
         case 5:
         case "end":
@@ -223,7 +223,7 @@ app.post("/users", /*#__PURE__*/function () {
           return fetchUsersData();
         case 2:
           users = _context5.sent;
-          res.render('users.ejs', {
+          res.render("users.ejs", {
             users: users
           });
         case 4:
@@ -247,7 +247,7 @@ app.post("/addNewUser", /*#__PURE__*/function () {
     return _regeneratorRuntime().wrap(function _callee6$(_context6) {
       while (1) switch (_context6.prev = _context6.next) {
         case 0:
-          _context6.t0 = addNewUser('http://localhost:3000/api/user/addNewUserFromAdmin', req.body)
+          _context6.t0 = addNewUser("http://localhost:3000/api/user/addNewUserFromAdmin", req.body)
           // Resolving promise for response data
           ;
           _context6.t1 = res;
@@ -258,7 +258,7 @@ app.post("/addNewUser", /*#__PURE__*/function () {
           _context6.t3 = {
             users: _context6.t2
           };
-          _context6.t4 = _context6.t1.render.call(_context6.t1, 'users.ejs', _context6.t3);
+          _context6.t4 = _context6.t1.render.call(_context6.t1, "users.ejs", _context6.t3);
           _context6.next = 9;
           return _context6.t0.then.call(_context6.t0, _context6.t4)["catch"](function (err) {
             return console.log(err);
@@ -284,9 +284,9 @@ function _addNewUser() {
         case 0:
           _context13.next = 2;
           return fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-type': 'application/json'
+              "Content-type": "application/json"
             },
             body: JSON.stringify(data)
           });
@@ -308,7 +308,7 @@ app.post("/makeAdmin", /*#__PURE__*/function () {
     return _regeneratorRuntime().wrap(function _callee7$(_context7) {
       while (1) switch (_context7.prev = _context7.next) {
         case 0:
-          _context7.t0 = post('http://localhost:3000/api/user/updateToAdminUser', req.body)
+          _context7.t0 = post("http://localhost:3000/api/user/updateToAdminUser", req.body)
           // Resolving promise for response data
           ;
           _context7.t1 = res;
@@ -319,7 +319,7 @@ app.post("/makeAdmin", /*#__PURE__*/function () {
           _context7.t3 = {
             users: _context7.t2
           };
-          _context7.t4 = _context7.t1.render.call(_context7.t1, 'users.ejs', _context7.t3);
+          _context7.t4 = _context7.t1.render.call(_context7.t1, "users.ejs", _context7.t3);
           _context7.next = 9;
           return _context7.t0.then.call(_context7.t0, _context7.t4)["catch"](function (err) {
             return console.log(err);
@@ -339,7 +339,7 @@ app.post("/removeAdmin", /*#__PURE__*/function () {
     return _regeneratorRuntime().wrap(function _callee8$(_context8) {
       while (1) switch (_context8.prev = _context8.next) {
         case 0:
-          _context8.t0 = post('http://localhost:3000/api/user/updateToUser', req.body)
+          _context8.t0 = post("http://localhost:3000/api/user/updateToUser", req.body)
           // Resolving promise for response data
           ;
           _context8.t1 = res;
@@ -350,7 +350,7 @@ app.post("/removeAdmin", /*#__PURE__*/function () {
           _context8.t3 = {
             users: _context8.t2
           };
-          _context8.t4 = _context8.t1.render.call(_context8.t1, 'users.ejs', _context8.t3);
+          _context8.t4 = _context8.t1.render.call(_context8.t1, "users.ejs", _context8.t3);
           _context8.next = 9;
           return _context8.t0.then.call(_context8.t0, _context8.t4)["catch"](function (err) {
             return console.log(err);
@@ -376,9 +376,9 @@ function _post() {
         case 0:
           _context14.next = 2;
           return fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-type': 'application/json'
+              "Content-type": "application/json"
             },
             body: JSON.stringify(data)
           });
@@ -402,7 +402,7 @@ app.post("/deleteUserData", /*#__PURE__*/function () {
     return _regeneratorRuntime().wrap(function _callee9$(_context9) {
       while (1) switch (_context9.prev = _context9.next) {
         case 0:
-          _context9.t0 = deleting('http://localhost:3000/api/user/deleteUser/' + req.body.email)
+          _context9.t0 = deleting("http://localhost:3000/api/user/deleteUser/" + req.body.email)
           // Resolving promise for response data
           ;
           _context9.t1 = res;
@@ -413,7 +413,7 @@ app.post("/deleteUserData", /*#__PURE__*/function () {
           _context9.t3 = {
             users: _context9.t2
           };
-          _context9.t4 = _context9.t1.render.call(_context9.t1, 'users.ejs', _context9.t3);
+          _context9.t4 = _context9.t1.render.call(_context9.t1, "users.ejs", _context9.t3);
           _context9.t0.then.call(_context9.t0, _context9.t4)["catch"](function (err) {
             return console.log(err);
           });
@@ -437,7 +437,7 @@ app.post("/item", /*#__PURE__*/function () {
           return fetchItem(req.body.name);
         case 2:
           data = _context10.sent;
-          res.render('Item', {
+          res.render("Item", {
             data: data
           });
         case 4:
@@ -470,14 +470,14 @@ app.use("/api/innovations", _Innovations["default"]);
 app.use("/api/user", _Users["default"]);
 app.use("/api/login", _Auth["default"]);
 // use routers for airlines and airports
-app.use('/api/airport', _Airport["default"]);
-app.use('/api/airline', _Airline["default"]);
+app.use("/api/airport", _Airport["default"]);
+app.use("/api/airline", _Airline["default"]);
 // use routers for flights and bookings
-app.use('/api/flight', _Flight["default"]);
+app.use("/api/flight", _Flight["default"]);
 // use routes for Payments
-app.use('/api/payment', _Payment["default"]);
+app.use("/api/payment", _Payment["default"]);
 // user routes for Admins and Employees
-app.use('/api/employee', _Employee["default"]);
+app.use("/api/employee", _Employee["default"]);
 
 // this is the first step of initializing the server while we make the application is listening to specific port
 app.listen(port, function () {

@@ -25,6 +25,11 @@ const Childs = sequelize.define('childs', {
         type: DataTypes.DATE,
         allowNull: true
     },
+    passport: {
+        type: DataTypes.STRING(45),
+        allowNull: true,
+        unique: false
+    },
     fullName: {
         type: DataTypes.VIRTUAL,
         get() {

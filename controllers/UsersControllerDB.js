@@ -229,14 +229,27 @@ async function createNewUser(user) {
     let childs = [];
     if (user.childs){
       for (child of user.childs){
-        newChild = await Child.create({
-            Fname: child.Fname,
-            Lname: child.Lname,
-            gender: child.gender,
-            birth: child.birth
-        }, { transaction: t });
-        await newChild.setClient(newClient, { transaction: t });
-        childs.push(newChild.id);
+        try {
+          let ifChild = await Child.findOne({ where: { passport: child.passport }, transaction: t });
+            if (ifChild) {
+              await ifChild.setClient(newClient, { transaction: t });
+                childs.push(ifChild.id);
+            }else {
+              newChild = await Child.create({
+                Fname: child.Fname,
+                Lname: child.Lname,
+                gender: child.gender,
+                birth: child.birth,
+                passport: child.passport,
+              }, { transaction: t });
+              await newChild.setClient(newClient, { transaction: t });
+              childs.push(newChild.id);
+            }
+        }catch (e) {
+          await t.rollback();
+          return "error";
+        }
+
       }
     }
     if (childs.length > 0){

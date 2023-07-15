@@ -130,7 +130,7 @@ async function createNewFlight(flight) {
 let getFlightData = async (name) => {
   let allFlightData = await Flight.findOne({
     where: { flight_number: name },
-    attributes:["id"]
+    attributes: ["id"],
   });
   let stops = await Stops.findAll({
     attributes: { exclude: ["createdAt", "updatedAt", "id", "flightId"] },
@@ -333,7 +333,7 @@ let getFlightSeats = async (req, res) => {
     include: [
       {
         model: Seats,
-        attributes: ["seat_no", "id", "status","ticketTicketNumber"],
+        attributes: ["seat_no", "id", "status", "ticketTicketNumber"],
       },
     ],
     order: [[{ model: Seats, as: "seat" }, "seat_no", "ASC"]],
@@ -344,24 +344,11 @@ let getFlightSeats = async (req, res) => {
 let getClassSeats = async (req, res) => {
   classId = req.body.id;
   let seats = await Seats.findAll({
-    attributes: ["seat_no", "id", "status","ticketTicketNumber"],
+    attributes: ["seat_no", "id", "status", "ticketTicketNumber"],
     where: {
       classDetailClassDetailsId: classId,
     },
-    });
-  // let classes = await ClassDetails.findOne({
-  //   attributes: ["class", "available_seats", "price"],
-  //   where: {
-  //     flightId: flightId,
-  //   },
-  //   include: [
-  //     {
-  //       model: Seats,
-  //       attributes: ["seat_no", "id", "status","ticketTicketNumber"],
-  //     },
-  //   ],
-  //   order: [[{ model: Seats, as: "seat" }, "seat_no", "ASC"]],
-  // });
+  });
   if (!seats) res.status(404).send("Seats with this Class ID is not found...");
   res.status(200).send(seats);
 };
@@ -370,9 +357,14 @@ let reserveSeats = async (req, res) => {
   try {
     let seats = req.body.seats;
     let users = req.body.users[0].clients;
-    let childs = req.body.users[0].childs
+    let childs = req.body.users[0].childs;
+    let childsNo = 0;
+    if (childs === []) {
+      childsNo = childs.length;
+      console.log(childsNo);
+    }
     // Check if no of seats are equal to users
-    if (seats.length !== users.length + childs.length) {
+    if (seats.length !== users.length + childsNo) {
       return res.status(400).send("Number of seats and users are not equal");
     }
     // generate ticket number for each seat
@@ -381,20 +373,27 @@ let reserveSeats = async (req, res) => {
     for (let i = 0; i < seats.length; i++) {
       if (i < users.length) {
         let ticketData = await generateTicketNumber(seats[i], users[i], false);
-        if (ticketData === null) {
-          notReserved.push({ seat: seats[i], user: users[i] });
+        if (ticketData === null || typeof ticketData === "string") {
+          notReserved.push({
+            seat: seats[i],
+            user: users[i],
+            error: ticketData,
+          });
         } else {
           reserved.push(ticketData);
         }
-      }else {
-        let ticketData = await generateTicketNumber(seats[i], childs[i-users.length], true);
+      } else {
+        let ticketData = await generateTicketNumber(
+          seats[i],
+          childs[i - users.length],
+          true
+        );
         if (ticketData === null) {
           notReserved.push({ seat: seats[i], user: users[i] });
         } else {
           reserved.push(ticketData);
         }
       }
-
     }
     if (notReserved.length > 0) {
       return res
@@ -433,31 +432,32 @@ async function generateTicketNumber(seat, user, isChild) {
       },
       { transaction: t }
     );
-    if (!seatData) return "Seat is not found...";
-    if (seatData.ticketTicketNumber !== null) return "Seat is not available...";
+    if (!seatData) throw new Error("Seat is not found");
+    if (seatData.ticketTicketNumber !== null)
+      throw new Error("Seat is not available");
     // check user is available
     let userData;
     if (!isChild) {
       userData = await Client.findOne(
-          {
-            where: {
-              id: user,
-            },
+        {
+          where: {
+            id: user,
           },
-          { transaction: t }
+        },
+        { transaction: t }
       );
-    }else {
-        userData = await Child.findOne(
-            {
-            where: {
-                id: user,
-            },
-            },
-            { transaction: t }
-        );
+    } else {
+      userData = await Child.findOne(
+        {
+          where: {
+            id: user,
+          },
+        },
+        { transaction: t }
+      );
     }
 
-    if (!userData) return "User is not found...";
+    if (!userData) throw new Error("User is not found");
     // generate ticket number
     let classId = seatData.class_detail.class_details_id;
     let flightId = seatData.class_detail.flight.id;
@@ -480,11 +480,12 @@ async function generateTicketNumber(seat, user, isChild) {
       { transaction: t }
     );
     // generate ticket
-    let newTicket = await Ticket.create({} , { transaction: t });
+    let newTicket = await Ticket.create({}, { transaction: t });
     // add ticket to user
     if (!isChild) {
       await userData.addTicket(newTicket, { transaction: t });
       newTicket.price = price;
+      newTicket.added_lagguge = 0;
       await newTicket.save({ transaction: t });
     }
     // add ticket to seat
@@ -494,20 +495,18 @@ async function generateTicketNumber(seat, user, isChild) {
     // add ticket to flight
     await flightData.addTicket(newTicket, { transaction: t });
     // commit transaction
-    if (isChild){
+    if (isChild) {
       await newTicket.addChilds(userData, { transaction: t });
-      newTicket.price = price * .6;
+      newTicket.price = price * 0.6;
+      newTicket.added_lagguge = 0;
       await newTicket.save({ transaction: t });
     }
     await t.commit();
     // return ticket number
     return await getTicketData(newTicket.ticket_number);
   } catch (e) {
-    for (let err in e.errors) {
-      console.log(e.errors[err].message);
-    }
     await t.rollback();
-    return null;
+    return `${e}`;
   }
 }
 // get all tickets data of user and linked users
@@ -539,9 +538,13 @@ async function searchForLinkedUsers(user_id) {
     where: {
       linked_users: user_id,
     },
-    attributes: {
-      include: ["id"],
+    attributes: ["id"],
+  });
+  let linkChilds = await Child.findAll({
+    where: {
+      clientId: user_id,
     },
+    attributes: ["id"],
   });
   // push user_id to linkedUsers array
   linkedUsers.push({ id: user_id });
@@ -552,10 +555,33 @@ async function searchForLinkedUsers(user_id) {
       where: {
         clientId: user.id,
       },
-      attributes: {
-        include: ["ticket_number"],
-      },
+      attributes: ["ticket_number"],
     });
+    // push tickets to allTickets array
+    if (tickets) {
+      for (let ticket of tickets) {
+        allTickets.push(ticket.ticket_number);
+      }
+    }
+  }
+  for (let child of linkChilds) {
+    // get tickets of each user
+    let tickets = await Ticket.findAll({
+      include: [
+        {
+          model: Child,
+          through: {
+            attributes: ["childId"], // Include the desired attribute from Childs table
+          },
+          attributes: ["id"], // Exclude all attributes from Childs table
+          as: 'childs', // Specify the alias for the Childs association
+          where: {
+            id: child.id // Filter by child.id
+          }
+        },
+      ],
+    });
+    console.log(JSON.parse(JSON.stringify(tickets)))
     // push tickets to allTickets array
     if (tickets) {
       for (let ticket of tickets) {
@@ -599,15 +625,14 @@ async function getTicketData(ticketId) {
         },
         {
           model: Child,
-        }
+        },
       ],
     });
-    console.log(JSON.parse(JSON.stringify(ticketData)))
-    let fullName
+    let fullName;
     if (ticketData.client === null) {
-      fullName = ticketData.childs[0].fullName
+      fullName = ticketData.childs[0].fullName;
     } else {
-      fullName = ticketData.client.fullName
+      fullName = ticketData.client.fullName;
     }
     // get flight data
     // console.log(JSON.parse(JSON.stringify(ticketData)))
@@ -729,6 +754,7 @@ async function finalView(flights) {
           class_type: class_detail.class,
           price: class_detail.price,
           seats: class_detail.available_seats,
+          extra_luggage_price: class_detail.extra_luggage_price,
         };
       }),
     };
