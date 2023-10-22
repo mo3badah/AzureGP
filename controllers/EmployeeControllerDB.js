@@ -1,12 +1,14 @@
 const Employee = require("../models/employee");
 const Airport = require("../models/airport");
 const bcrypt = require("bcrypt");
+const {AUTH_MAX_AGE} = process.env;
 const jwt = require("jsonwebtoken");
+const {generateToken} = require("../config/jwt");
 
 let postNewEmployee = async (req, res) => {
     try{
         let employee = await Employee.findOne({where: {email: req.body.email}});
-        if (employee) return res.status(400).send(`Employee with this email: ${req.body.email} is already exist`);
+        if (employee) return res.status(401).json({ error:`Employee with this email: ${req.body.email} is already exist`});
         let salt = await bcrypt.genSalt(10);
         let hashPswd = await bcrypt.hash(req.body.password, salt);
         let newEmployee = await Employee.create({
@@ -24,19 +26,28 @@ let postNewEmployee = async (req, res) => {
             job_title: req.body.job_title,
         }
         );
-        let sup = await Employee.findOne({where: {SSN: req.body.sup_ssn}});
-        if (sup) await newEmployee.setSupervisor(sup);
-        let AP = await Airport.findOne({where: {AP_name: req.body.airport_name}});
-        if (AP) await newEmployee.setAirport(AP);
-        let token = jwt.sign({empSSN: newEmployee.SSN}, "myJsonWebTokenSecretKeyIsHere");
-        res.header("x-auth-token", token);
-        // res.status(200).send(`Ok Employee: ${req.body.Fname} ${req.body.Lname} registered with email: ${req.body.email}`);
-        res.status(200).send(token);
-    }catch (e) {
-        for (let err in e.errors) {
-            console.log(e.errors[err].message);
+        if (req.body.sup_ssn) {
+            let sup = await Employee.findOne({where: {SSN: req.body.sup_ssn}});
+            if (sup) await newEmployee.setSupervisor(sup);
         }
-        res.status(400).send(`Bad Request...`);
+        if (req.body.airport_name){
+            let AP = await Airport.findOne({where: {AP_name: req.body.airport_name}});
+            if (AP) await newEmployee.setAirport(AP);
+        }
+        let payload = {
+            SSN: newEmployee.SSN,
+            fullName: newEmployee.fullName,
+            job_title: newEmployee.job_title
+        }
+        const token = await generateToken(payload);
+        payload.token=token
+        res.cookie('token', token, {
+            httpOnly: false,
+            maxAge: AUTH_MAX_AGE,
+        });
+        res.status(200).send(payload);
+    }catch(error) {
+        return res.status(400).json({ error: error });
     }
 }
 let getAllEmployees = async (req, res) => {
@@ -54,24 +65,23 @@ let getAllEmployees = async (req, res) => {
 let adminLogin = async (req, res) => {
     try {
         let employee = await Employee.findOne({where: {SSN: req.body.SSN}});
-        if (!employee) return res.status(400).send("Invalid SSN or Password please try again");
+        if (!employee) return res.status(401).json({ error:"Invalid SSN or Password please try again"});
         const validPswd = await bcrypt.compare(req.body.password, employee.password);
-        if (!validPswd) return res.status(400).send("Invalid SSN or Password...");
-        let token = jwt.sign({empSSN: employee.SSN, job_title: employee.job_title}, "myJsonWebTokenSecretKeyIsHere");
-        res.header("x-auth-token", token);
-        const query = {
-            "name": employee.fullName,
-            "job_title": employee.job_title,
-            "SSN": employee.SSN
+        if (!validPswd) return res.status(401).json({ error:"Invalid SSN or Password..."});
+        let payload = {
+            SSN: employee.SSN,
+            fullName: employee.fullName,
+            job_title: employee.job_title
         }
-        for (let propName in query) {
-            res.cookie(propName, query[propName],2*24*60*60)
-        }
-        // res.status(200).send(`The Employee ${employee.fullName} signed in successfully.`)
-        res.status(200).send(token)
-    }catch (e) {
-        res.status(400).send(`Bad Request...`);
-        console.log("there is some errors on the config file configuration :"+e)
+        const token = await generateToken(payload);
+        payload.token=token
+        res.cookie('token', token, {
+            httpOnly: false,
+            maxAge: AUTH_MAX_AGE,
+        });
+        res.status(200).send(payload);
+    }catch(error) {
+        return res.status(400).json({ error: error });
     }
 }
 
