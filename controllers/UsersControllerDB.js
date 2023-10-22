@@ -5,39 +5,35 @@ const sequelize = require("../models/sequelize");
 const ClientPhone = require("../models/client_phone");
 const ClientPassport = require("../models/client_passport");
 const bcrypt = require("bcrypt");
-const path = require("path");
-const jwt = require("jsonwebtoken");
-const fs = require("fs");
-const { json } = require("express");
-const Innovation = require("../models/InnovationModelDB");
+const {userToken} = require("../config/jwt");
+const {AUTH_MAX_AGE} = process.env;
 require("dotenv").config();
 let postNewClient = async (req, res) => {
   try {
     let newClient = await createNewUser(req.body);
     if (!newClient){
-        return res
-            .status(400)
-            .send(`user with this email: ${req.body.email} is already exist`);
+      res.status(401).json({ error:`user with this email: ${req.body.email} is already exist`});
     }
-    const token = await jwtCreate(newClient);
-    // send response
-    res.header("x-auth-token", token);
-    res
-      .status(200)
-      .send(
-        token
-      );
-  } catch (e) {
-    for (let err in e.errors) {
-      console.log(e.errors[err].message);
+    let payload = {
+      id: newClient.id,
+      fullName: newClient.fullName,
+      email: newClient.email
     }
-    res.status(400).send(`Bad Request...`);
+    const token = await userToken(payload);
+    payload.token=token
+    res.cookie('token', token, {
+      httpOnly: false,
+      maxAge: AUTH_MAX_AGE,
+    });
+    res.status(200).send(payload);
+  }catch(error) {
+    return res.status(400).json({ error: error });
   }
 };
 let getAllClients = async (req, res) => {
   try {
     let users = await Client.findAll({
-      include: ClientPhone,
+      include: [ClientPhone, ClientPassport]
     });
     if (!users) return res.status(404).send("Clients data are not found...");
     res.send(users);
@@ -181,16 +177,6 @@ let editNewClient = async (req, res) => {
       .send(`Client with email ${req.body.email} is not found to be updated`);
   }
 };
-async function jwtCreate(user) {
-  return await jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-    },
-    process.env.JWT_PRIVATE_KEY
-  );
-}
 async function createNewUser(user) {
   const t = await sequelize.transaction();
   try {

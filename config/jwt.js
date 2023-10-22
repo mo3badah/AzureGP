@@ -12,6 +12,18 @@ const generateToken = async (user) => {
         { expiresIn: '2h' }
     );
 };
+const userToken = async (user) => {
+    return jwt.sign(
+        {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            job_title: 'user'
+        },
+        JWT_PRIVATE_KEY,
+        { expiresIn: '2h' }
+    );
+};
 
 const refreshAuthTokenCookie = async (req, res, next) => {
     //1. get the existing token from cookie
@@ -41,4 +53,4 @@ const refreshAuthTokenCookie = async (req, res, next) => {
 
 }
 
-module.exports = { generateToken, refreshAuthTokenCookie };
+module.exports = { generateToken, userToken, refreshAuthTokenCookie };
