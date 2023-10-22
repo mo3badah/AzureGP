@@ -30,7 +30,8 @@ let postNewEmployee = async (req, res) => {
         if (AP) await newEmployee.setAirport(AP);
         let token = jwt.sign({empSSN: newEmployee.SSN}, "myJsonWebTokenSecretKeyIsHere");
         res.header("x-auth-token", token);
-        res.status(200).send(`Ok Employee: ${req.body.Fname} ${req.body.Lname} registered with email: ${req.body.email}`);
+        // res.status(200).send(`Ok Employee: ${req.body.Fname} ${req.body.Lname} registered with email: ${req.body.email}`);
+        res.status(200).send(token);
     }catch (e) {
         for (let err in e.errors) {
             console.log(e.errors[err].message);
@@ -66,7 +67,8 @@ let adminLogin = async (req, res) => {
         for (let propName in query) {
             res.cookie(propName, query[propName],2*24*60*60)
         }
-        res.status(200).send(`The Employee ${employee.fullName} signed in successfully.`)
+        // res.status(200).send(`The Employee ${employee.fullName} signed in successfully.`)
+        res.status(200).send(token)
     }catch (e) {
         res.status(400).send(`Bad Request...`);
         console.log("there is some errors on the config file configuration :"+e)
