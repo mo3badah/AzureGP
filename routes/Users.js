@@ -3,13 +3,12 @@ const router = express.Router()
 const validator = require("../middlewares/UsersValidatorMW")
 const updateValidator = require("../middlewares/UpdateClientValidatorMW")
 const userBulkValidator = require("../middlewares/UsersBulkValidator")
-const {postNewClient, getAllClients, addNewClientFromAdmin,addMultipleClients, editNewClient, updateToClient, deleteClient} = require("../controllers/UsersControllerDB");
+const {postNewClient, getAllClients, addNewClientFromAdmin,addMultipleClients, editNewClient, updateToClient, deleteClient, getSpecificClient} = require("../controllers/UsersControllerDB");
+const { authenticateUser, authorizeUser} = require('../controllers/authentication');
 
-// Registration route handler
-// 1. we get the route to make a new user
-// 2. we check validation of the data which sent to us from the form and try to make it ready
 router.post("/",validator,postNewClient)
-router.get("/",getAllClients)
+router.get("/",authenticateUser, authorizeUser(['admin']), getAllClients)
+router.get("/mine",authenticateUser, getSpecificClient)
 router.post("/editNewUser", updateValidator, editNewClient)
 router.post("/addNewClientFromAdmin",validator,addNewClientFromAdmin)
 router.post("/addMultipleClients",userBulkValidator, addMultipleClients)

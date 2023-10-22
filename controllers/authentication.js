@@ -20,9 +20,9 @@ const authenticateUser = (req, res, next) => {
 
 const authorizeUser = (roles) => {
     return (req, res, next) => {
-        const { role } = req.user;
+        const { job_title } = req.user;
 
-        if (!roles.includes(role)) {
+        if (!roles.includes(job_title)) {
             return res.status(403).json({error: 'Forbidden'});
         }
 

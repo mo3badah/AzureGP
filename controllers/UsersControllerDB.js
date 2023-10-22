@@ -1,5 +1,7 @@
 // import user model of db
 const Client = require("../models/client");
+const Employee = require("../models/employee");
+const Airport = require("../models/airport");
 const Child = require("../models/childs");
 const sequelize = require("../models/sequelize");
 const ClientPhone = require("../models/client_phone");
@@ -44,6 +46,35 @@ let getAllClients = async (req, res) => {
     res.status(404).send("Clients data are not found...");
   }
 };
+// get specific user
+let getSpecificClient = async (req, res) => {
+    try {
+      const { job_title } = req.user;
+      if (job_title === 'user'){
+        let user = await Client.findOne({
+          where: { id: req.user.id },
+          include: [ClientPhone, ClientPassport]
+        });
+        if (!user) return res.status(404).send("User is not found...");
+        res.send(user);
+      }else {
+        let employee = await Employee.findOne({
+          where: { SSN: req.user.SSN },
+          include: [
+            { model: Employee, as: 'supervisor' }, // Include the supervisor association
+            Airport, // Include the Airport association
+          ],
+        });
+        if (!employee) return res.status(404).send("employee is not found...");
+        res.send(employee);
+      }
+    } catch (e) {
+        for (let err in e.errors) {
+        console.log(e.errors[err].message);
+        }
+        res.status(404).send("Client is not found...");
+    }
+}
 let addNewClientFromAdmin = async (req, res) => {
   // check if user founded or not
   try {
@@ -259,5 +290,6 @@ module.exports = {
   getAllClients,
   addNewClientFromAdmin,
   addMultipleClients,
-  editNewClient
+  editNewClient,
+  getSpecificClient
 };
