@@ -10,12 +10,12 @@ require('dotenv').config();
 const sequelize = new Sequelize(process.env.DATABASE_SCHEMA, process.env.DATABASE_USER, process.env.DATABASE_PASSWORD, {
     host: process.env.DATABASE_HOST,
     dialect: process.env.DATABASE_DIALECT,
-    dialectOptions: {
-        ssl: {
-            ca: fs.readFileSync(path.join(__dirname, 'initialData/DigiCertGlobalRootCA.crt.pem')).toString()
-        },
-    },
-    connectTimeout: 30000,
+    // dialectOptions: {
+    //     ssl: {
+    //         ca: fs.readFileSync(path.join(__dirname, 'initialData/DigiCertGlobalRootCA.crt.pem')).toString()
+    //     },
+    // },
+    // connectTimeout: 30000,
 });
 
 module.exports = sequelize;
