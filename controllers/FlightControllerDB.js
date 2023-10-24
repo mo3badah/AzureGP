@@ -4,8 +4,6 @@ const Airport = require("../models/airport");
 const FlightAirport = require("../models/FlightAirports");
 const sequelize = require("../models/sequelize");
 const { Op } = require("sequelize");
-const jwt = require("jsonwebtoken");
-const { json } = require("express");
 const Airline = require("../models/airline");
 const Stops = require("../models/stops");
 const Types = require("../models/type");
@@ -14,8 +12,6 @@ const Seats = require("../models/seats");
 const Ticket = require("../models/ticket");
 const Client = require("../models/client");
 const Child = require("../models/childs");
-const { all } = require("express/lib/application");
-// let flight_number = require("../util/flightNameGen");
 
 async function createNewFlight(flight) {
   let t = await sequelize.transaction();
@@ -634,12 +630,22 @@ async function getTicketData(ticketId) {
         },
         {
           model: Child,
-        },
+           include: [
+            {
+                model: Client
+                },
+            ],
+        }
       ],
     });
     let fullName;
     if (ticketData.client === null) {
-      fullName = ticketData.childs[0].fullName;
+      let father = ticketData.childs[0].client.fullName;
+      if (father){
+        fullName = `${ticketData.childs[0].Fname} ${father}`;
+      } else {
+        fullName = ticketData.childs[0].fullName;
+      }
     } else {
       fullName = ticketData.client.fullName;
     }
