@@ -397,8 +397,8 @@ let reserveSeats = async (req, res) => {
           childs[i - users.length],
           true
         );
-        if (ticketData === null) {
-          notReserved.push({ seat: seats[i], user: users[i] });
+        if (ticketData === null || typeof ticketData === "string") {
+          notReserved.push({ seat: seats[i], user: childs[i - users.length], error: ticketData });
         } else {
           reserved.push(ticketData);
         }

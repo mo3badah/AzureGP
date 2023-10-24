@@ -456,7 +456,9 @@ function fetchItem(name) {
   });
 }
 app.use(_express["default"]["static"]("front"));
-app.use((0, _cors["default"])());
+app.use((0, _cors["default"])({
+  credentials: true
+}));
 // // set mongoose connection
 // mongoose.connect("mongodb://localhost:27017/innovation")
 //     .then(()=> console.log("connected to DB"))
