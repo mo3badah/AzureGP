@@ -202,7 +202,7 @@ function fetchItem(name) {
 }
 
 app.use(express.static("front"));
-app.use(cors());
+app.use(cors({credentials: true}));
 // // set mongoose connection
 // mongoose.connect("mongodb://localhost:27017/innovation")
 //     .then(()=> console.log("connected to DB"))

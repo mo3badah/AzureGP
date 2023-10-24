@@ -14,7 +14,7 @@ let postNewClient = async (req, res) => {
   try {
     let newClient = await createNewUser(req.body);
     if (!newClient){
-      res.status(401).json({ error:`user with this email: ${req.body.email} is already exist`});
+      return res.status(401).json({ error:`user with this email: ${req.body.email} is already exist`});
     }
     let payload = {
       id: newClient.id,
