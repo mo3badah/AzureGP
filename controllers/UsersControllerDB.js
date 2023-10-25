@@ -13,8 +13,8 @@ require("dotenv").config();
 let postNewClient = async (req, res) => {
   try {
     let newClient = await createNewUser(req.body);
-    if (!newClient){
-      return res.status(401).json({ error:`user with this email: ${req.body.email} is already exist`});
+    if (typeof newClient === "string"){
+      return res.status(401).json({ error: newClient});
     }
     let payload = {
       id: newClient.id,
@@ -214,7 +214,7 @@ async function createNewUser(user) {
     let client = await Client.findOne({ where: { email: user.email }, transaction: t });
     if (client) {
       await t.rollback();
-      return null;
+      return `user with this email: ${client.email} is already exist`;
     }
     let salt = await bcrypt.genSalt(10);
     let hashPswd = await bcrypt.hash(user.password, salt);
@@ -236,12 +236,20 @@ async function createNewUser(user) {
         phone: user.phone,
       }, { transaction: t });
       await newClientPhone.setClient(newClient, { transaction: t });
+        if (!newClientPhone) {
+          await t.rollback();
+          return "Check your phone number"
+        }
     }
     if (user.passport) {
         newClientPassport = await ClientPassport.create({
           passport: user.passport,
         }, { transaction: t });
       await newClientPassport.setClient(newClient, { transaction: t });
+      if (!newClientPassport) {
+        await t.rollback();
+        return  "Check your passport"
+      }
     }
     let childs = [];
     if (user.childs){
@@ -264,9 +272,8 @@ async function createNewUser(user) {
             }
         }catch (e) {
           await t.rollback();
-          return "error";
+          return "Check your childs data";
         }
-
       }
     }
     if (childs.length > 0){
@@ -275,13 +282,8 @@ async function createNewUser(user) {
     await t.commit();
     return newClient;
   } catch (e) {
-    if (e.errors) {
-      for (let err of e.errors) {
-        console.log(err.message);
-      }
-    }
     await t.rollback();
-    return "error";
+    return e.errors[0].message
   }
 
 }
