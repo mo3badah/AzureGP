@@ -54,7 +54,7 @@ const Flight = sequelize.define('flight', {
     }
 });
 
-Flight.hasMany(Stops);
+Flight.hasMany(Stops, {onDelete: 'cascade'});
 Stops.belongsTo(Flight);
 
 Type.hasMany(Flight);

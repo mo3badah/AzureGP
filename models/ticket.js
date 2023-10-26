@@ -21,7 +21,7 @@ const Ticket = sequelize.define('ticket', {
     }
 });
 
-Flight.hasMany(Ticket);
+Flight.hasMany(Ticket, {onDelete: 'cascade'});
 Ticket.belongsTo(Flight);
 
 ClassDetails.hasMany(Ticket);

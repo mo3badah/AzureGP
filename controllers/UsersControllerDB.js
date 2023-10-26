@@ -287,11 +287,26 @@ async function createNewUser(user) {
   }
 
 }
+// delete client using client id and remove all his childs and tickets
+let deleteClient = async (req, res) => {
+    try {
+        let client = await Client.findOne({ where: { id: req.body.id } });
+        if (!client) return res.status(404).send(`Client with id ${req.body.id} is not found`);
+        let deletedClient = await Client.destroy({ where: { id: req.body.id } });
+        if (!deletedClient) return res.status(404).send(`Client with id ${req.body.id} is not found to be deleted`);
+        return res.status(200).send("deleted user successfully");
+    } catch (e) {
+        res
+        .status(404)
+        .send(e.errors[0].message);
+    }
+}
 module.exports = {
   postNewClient,
   getAllClients,
   addNewClientFromAdmin,
   addMultipleClients,
   editNewClient,
-  getSpecificClient
+  getSpecificClient,
+  deleteClient
 };

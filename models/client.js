@@ -115,23 +115,23 @@ Client.hasMany(Childs);
 Childs.belongsTo(Client);
 
 Client.belongsTo(Client, { as: "link", foreignKey: 'linked_users' });
-Client.hasMany(Payment);
+Client.hasMany(Payment,{ onDelete: 'CASCADE' });
 Payment.belongsTo(Client);
 Client.hasMany(TicketCancel, { foreignKey: 'client_id' })
 TicketCancel.belongsTo(Client, { foreignKey: 'client_id' });
 Payment.hasMany(TicketCancel, { foreignKey: 'payment_id' })
 TicketCancel.belongsTo(Payment, { foreignKey: 'payment_id' });
 
-Client.hasMany(Ticket);
+Client.hasMany(Ticket, { onDelete: 'CASCADE' });
 Ticket.belongsTo(Client);
 
-Client.hasMany(ClientPassport);
+Client.hasMany(ClientPassport,{ onDelete: 'CASCADE' });
 ClientPassport.belongsTo(Client);
 
-Client.hasMany(ClientPhone);
+Client.hasMany(ClientPhone, { onDelete: 'CASCADE' });
 ClientPhone.belongsTo(Client);
 
-Client.hasMany(BiometricsData);
+Client.hasMany(BiometricsData, { onDelete: 'CASCADE' });
 BiometricsData.belongsTo(Client);
 
 Employee.belongsToMany(Client, { through: 'client_employee' });
@@ -143,7 +143,7 @@ Client.belongsToMany(Employee, { through: 'client_employee' });
         console.log('Connection has been established successfully.');
 
         await sequelize.sync({
-            // alter: true
+            alter: true
         });
         console.log('All models were synchronized successfully.');
     } catch (error) {

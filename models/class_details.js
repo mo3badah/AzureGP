@@ -35,10 +35,10 @@ const ClassDetails = sequelize.define('class_details', {
     timestamps: false
 });
 
-ClassDetails.hasMany(Seats);
+ClassDetails.hasMany(Seats, {onDelete: 'cascade'});
 Seats.belongsTo(ClassDetails);
 
-Flight.hasMany(ClassDetails);
+Flight.hasMany(ClassDetails, {onDelete: 'cascade'});
 ClassDetails.belongsTo(Flight);
 
 module.exports = ClassDetails;

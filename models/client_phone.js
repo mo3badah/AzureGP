@@ -8,6 +8,7 @@ const ClientPhone = sequelize.define('ClientPhone', {
     }
 }, {
     tableName: 'client_phone',
+    onDelete: 'CASCADE',
     timestamps: false,
 });
 
