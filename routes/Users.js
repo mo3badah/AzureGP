@@ -8,8 +8,8 @@ const { authenticateUser, authorizeUser} = require('../controllers/authenticatio
 const idValidator = require("../middlewares/IdValidator");
 
 router.post("/",validator,postNewClient)
-router.get("/",authenticateUser, authorizeUser(['admin']), getAllClients)
-router.get("/mine",authenticateUser, getSpecificClient)
+router.get("/", getAllClients)
+router.post("/mine", getSpecificClient)
 router.post("/editNewUser", updateValidator, editNewClient)
 router.post("/addNewClientFromAdmin",validator,addNewClientFromAdmin)
 router.post("/addMultipleClients",userBulkValidator, addMultipleClients)

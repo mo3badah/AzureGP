@@ -8,7 +8,9 @@ const ClientPhone = require("../models/client_phone");
 const ClientPassport = require("../models/client_passport");
 const bcrypt = require("bcrypt");
 const {userToken} = require("../config/jwt");
-const {AUTH_MAX_AGE} = process.env;
+const jwt = require("jsonwebtoken");
+const {AUTH_MAX_AGE, JWT_PRIVATE_KEY} = process.env;
+
 require("dotenv").config();
 let postNewClient = async (req, res) => {
   try {
@@ -49,24 +51,27 @@ let getAllClients = async (req, res) => {
 // get specific user
 let getSpecificClient = async (req, res) => {
     try {
-      const { job_title } = req.user;
+      const code = jwt.verify(req.body.token, JWT_PRIVATE_KEY);
+      const { job_title } = code;
       if (job_title === 'user'){
+        const { id } = code;
         let user = await Client.findOne({
-          where: { id: req.user.id },
+          where: { id: id },
           include: [ClientPhone, ClientPassport]
         });
         if (!user) return res.status(404).send("User is not found...");
-        res.send(user);
+        res.status(200).send(user);
       }else {
+        const { SSN } = code;
         let employee = await Employee.findOne({
-          where: { SSN: req.user.SSN },
+          where: { SSN: SSN },
           include: [
             { model: Employee, as: 'supervisor' }, // Include the supervisor association
             Airport, // Include the Airport association
           ],
         });
         if (!employee) return res.status(404).send("employee is not found...");
-        res.send(employee);
+        res.status(200).send(employee);
       }
     } catch (e) {
         for (let err in e.errors) {
@@ -96,10 +101,8 @@ let addMultipleClients = async (req, res) => {
     let notAdded = [];
     for (let client of newClients) {
       let newClient = await createNewUser(client);
-      if (newClient === null) {
-        notAdded.push({ email: client.email, error: "Email already exists" });
-      }else if (newClient === "error") {
-        notAdded.push({ email: client.email, error: "Not Unique Passport" });
+      if (typeof newClient === "string"){
+        return res.status(401).json({ error: newClient});
       }else {
         allClientsAdded.push(newClient.id );
         if (newClient.childs){
